@@ -151,7 +151,7 @@ static void os_guard(void *addr, size_t size)
  * Arena API
  * ========================================================= */
 
-static int arena_init(Arena *a, size_t reserve_size, size_t commit_step)
+int arena_init(Arena *a, size_t reserve_size, size_t commit_step)
 {
     size_t page = os_page_size();
     size_t guard = ARENA_GUARD_PAGES ? page : 0;
@@ -181,7 +181,7 @@ static int arena_init(Arena *a, size_t reserve_size, size_t commit_step)
     }
 }
 
-static void arena_destroy(Arena *a)
+void arena_destroy(Arena *a)
 {
 #if defined(_WIN32)
     os_release(a->base - (ARENA_GUARD_PAGES ? os_page_size() : 0));
@@ -193,12 +193,12 @@ static void arena_destroy(Arena *a)
 #endif
 }
 
-static void arena_reset(Arena *a)
+void arena_reset(Arena *a)
 {
     a->cursor = a->base;
 }
 
-static void *arena_alloc(Arena *a, size_t size)
+void *arena_alloc(Arena *a, size_t size)
 {
     uint8_t *next;
 
@@ -255,7 +255,7 @@ static double now_seconds(void)
 
 /*
  These ensure allocations have observable side effects.
- Without them, -O2 can remove entire loops.
+ Without them, -O2 can remove entire loops from the benchmark;
 */
 static volatile void *arena_sink;
 static volatile void *malloc_sink;

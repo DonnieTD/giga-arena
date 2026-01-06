@@ -1,49 +1,83 @@
 # ============================================================
-# Makefile — OS-native Arena Allocator Benchmark
+# Giga Arena — static library + benchmark (C89)
 # ============================================================
 
-# Compiler
-CC ?= cc
+CC      ?= cc
+AR      ?= ar
+ARFLAGS := rcs
 
-# Build modes
+# ------------------------------------------------------------
+# Flags
+# ------------------------------------------------------------
+
 CFLAGS_RELEASE := -std=c89 -O2 -Wall -Wextra -Wpedantic
 CFLAGS_DEBUG   := -std=c89 -O0 -g  -Wall -Wextra -Wpedantic
 
-# Output binary
-BIN := arena_bench
+INCLUDES := -Iinclude
 
-# Source files
-SRC := main.c
+# ------------------------------------------------------------
+# Layout
+# ------------------------------------------------------------
 
-# Default target
+SRC_DIR   := .
+BUILD_DIR := build
+DIST_DIR  := dist
+
+LIB       := $(DIST_DIR)/libgiga-arena.a
+BENCH_BIN := arena_bench
+
+SRC       := main.c
+OBJ       := $(BUILD_DIR)/arena.o
+
+
+# ------------------------------------------------------------
+# Default
+# ------------------------------------------------------------
+
 .PHONY: all
-all: release
+all: lib bench
 
 # ------------------------------------------------------------
-# Release build (benchmarking)
+# Static library build
 # ------------------------------------------------------------
-.PHONY: release
-release:
-	$(CC) $(CFLAGS_RELEASE) $(SRC) -o $(BIN)
+
+.PHONY: lib
+lib: $(LIB)
+
+$(LIB): $(OBJ)
+	@mkdir -p $(DIST_DIR)
+	$(AR) $(ARFLAGS) $@ $^
+
+$(BUILD_DIR)/arena.o: $(SRC)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS_RELEASE) $(INCLUDES) \
+	      -DGIGA_ARENA_NO_MAIN \
+	      -c $< -o $@
 
 # ------------------------------------------------------------
-# Debug build
+# Benchmark build (keeps main)
 # ------------------------------------------------------------
+
+.PHONY: bench
+bench:
+	$(CC) $(CFLAGS_RELEASE) $(INCLUDES) $(SRC) -o $(BENCH_BIN)
+
+# ------------------------------------------------------------
+# Debug benchmark
+# ------------------------------------------------------------
+
 .PHONY: debug
 debug:
-	$(CC) $(CFLAGS_DEBUG) $(SRC) -o $(BIN)
+	$(CC) $(CFLAGS_DEBUG) $(INCLUDES) $(SRC) -o $(BENCH_BIN)
 
 # ------------------------------------------------------------
-# Clean
+# Utilities
 # ------------------------------------------------------------
+
 .PHONY: clean
 clean:
-	rm -f $(BIN)
+	rm -rf $(BUILD_DIR) $(DIST_DIR) $(BENCH_BIN)
 
-# ------------------------------------------------------------
-# Run benchmark
-# ------------------------------------------------------------
 .PHONY: run
-run: release
-	./$(BIN)
-
+run: bench
+	./$(BENCH_BIN)
